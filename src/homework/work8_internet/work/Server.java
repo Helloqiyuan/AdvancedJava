@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class Server {
     //一个ip:port对应一个writer
@@ -57,6 +58,14 @@ public class Server {
                         continue;
                     }
                     broadcastTo(users.get(x[1]),getIPPort(socket) + "对你说:" + x[2]);
+                    continue;
+                }
+                if(msg.contains("/ls")){
+                    Iterator x = users.values().iterator();
+                    while(x.hasNext()){
+                        writer.write(x.next() + "\n");
+                        writer.flush();
+                    }
                     continue;
                 }
                 broadcast(writer,socket.getInetAddress() + ":" + socket.getPort() + "说:" + msg);
