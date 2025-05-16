@@ -69,12 +69,14 @@ public class Server {
                     continue;
                 }
                 if(msg.contains("/ls")){
+                    broadcastTo(writer,"在线用户:");
                     for(String x:users.keySet()){
                         broadcastTo(writer,x);
                     }
-                    for(String x:pwd.keySet()){
-                        broadcastTo(writer,x + ":" + pwd.get(x));
-                    }
+//                    broadcastTo(writer,"用户密码:");
+//                    for(String x:pwd.keySet()){
+//                        broadcastTo(writer,x + ":" + pwd.get(x));
+//                    }
                     continue;
                 }
                 broadcast(writer,socket.getInetAddress() + ":" + socket.getPort() + "说:" + msg);
