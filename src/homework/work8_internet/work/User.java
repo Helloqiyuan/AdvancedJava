@@ -67,10 +67,4 @@ public class User implements Serializable {
                 ", name='" + name + '\'' +
                 '}';
     }
-    public static boolean isRightPassword(User x,User y){
-        return x.password.equals(y.password);
-    }
-    public static boolean isRightName(User x,User y){
-        return x.name.equals(y.name);
-    }
 }
