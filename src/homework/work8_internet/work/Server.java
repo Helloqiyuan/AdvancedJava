@@ -9,6 +9,7 @@ import java.util.Iterator;
 public class Server {
     //一个ip:port对应一个writer
     private static final HashMap<String,BufferedWriter> users = new HashMap<>();
+    private static final HashMap<String,String> pwd = new HashMap<>();
     private static final int PORT = 6666;
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(PORT);
@@ -18,6 +19,7 @@ public class Server {
             Socket socket = serverSocket.accept();
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             System.out.println("服务器端检测到" + socket.getInetAddress() + ":" + socket.getPort() + "连接");
+            broadcastTo(writer,"连接服务器成功!");
             new Thread(()->receive(socket,writer)).start();
         }
     }
@@ -26,29 +28,35 @@ public class Server {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             while (true){
                 String msg = reader.readLine();
-                if(msg == null || "".equals(msg)){
+                if(msg == null || msg.isEmpty()){
                     continue;
                 }
                 System.out.println("服务器端接收到的" + (users.containsKey(getIPPort(socket)) ? "":"未") + "登录用户:" + socket.getInetAddress() + ":" + socket.getPort() + "发的:" + msg);
                 if(msg.contains("/help")){
-                    broadcastTo(writer,"/login 登录\n/to user message 给谁说悄悄话");
-                    continue;
-                }
-                if(!users.containsKey(getIPPort(socket)) && "/login".equals(msg)){
-                    users.put(getIPPort(socket),writer);
-                    broadcastTo(writer,"登录成功");
-                    broadcast(writer,socket.getInetAddress() + ":" + socket.getPort() + "上线了");
-                    continue;
-                }
-                if(users.containsKey(getIPPort(socket)) && "/login".equals(msg)){
-                    broadcastTo(writer,"你已登录");
+                    broadcastTo(writer,"/login 登录\n/to user message 给谁说悄悄话\n/ls 列出所有在线用户");
                     continue;
                 }
                 if("/q".equals(msg)){
                     throw new IOException();
                 }
+                if(!users.containsKey(getIPPort(socket)) && msg.contains("/login")){
+                    String[] x = msg.split(" ");
+                    if(x.length < 3){
+                        broadcastTo(writer,"请输入/login username password");
+                        continue;
+                    }
+                    users.put(getIPPort(socket),writer);
+                    pwd.put(getIPPort(socket),x[1] + "-" + x[2]);
+                    broadcastTo(writer,"登录成功");
+                    broadcast(writer,socket.getInetAddress() + ":" + socket.getPort() + "上线了");
+                    continue;
+                }
                 if(!users.containsKey(getIPPort(socket))){
                     broadcastTo(writer,"请先登录");
+                    continue;
+                }
+                if(users.containsKey(getIPPort(socket)) && "/login".equals(msg)){
+                    broadcastTo(writer,"你已登录");
                     continue;
                 }
                 if(msg.contains("/to")){
@@ -61,10 +69,11 @@ public class Server {
                     continue;
                 }
                 if(msg.contains("/ls")){
-                    Iterator x = users.values().iterator();
-                    while(x.hasNext()){
-                        writer.write(x.next() + "\n");
-                        writer.flush();
+                    for(String x:users.keySet()){
+                        broadcastTo(writer,x);
+                    }
+                    for(String x:pwd.keySet()){
+                        broadcastTo(writer,x + ":" + pwd.get(x));
                     }
                     continue;
                 }
