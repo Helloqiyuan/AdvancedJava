@@ -29,6 +29,7 @@ public class ServerV2 {
             }
             sockets.add(socket);
             System.out.println("服务器端检测到客户端" + socket.getInetAddress() + ":" + socket.getPort() + "连接");
+            broadcastTo(socket,"服务器连接成功!");
             new Thread(()->logIn(socket)).start();
         }
     }
