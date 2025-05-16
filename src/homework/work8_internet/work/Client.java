@@ -13,6 +13,7 @@ public class Client {
         //测试连接
         System.out.println("/help获取帮助");
         //接收消息线程
+        //注释
         new Thread(()->{
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
