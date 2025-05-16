@@ -9,6 +9,7 @@ import java.util.Iterator;
 public class Server {
     //一个ip:port对应一个writer
     private static final HashMap<String,BufferedWriter> users = new HashMap<>();
+    //一个ip:port对应一个pwd
     private static final HashMap<String,String> pwd = new HashMap<>();
     private static final int PORT = 6666;
     public static void main(String[] args) throws IOException {
@@ -42,13 +43,13 @@ public class Server {
                 if(!users.containsKey(getIPPort(socket)) && msg.contains("/login")){
                     String[] x = msg.split(" ");
                     if(x.length < 3){
-                        broadcastTo(writer,"请输入/login username password");
+                        broadcastTo(writer,"请输入/login username password username");
                         continue;
                     }
                     users.put(getIPPort(socket),writer);
-                    pwd.put(getIPPort(socket),x[1] + "-" + x[2]);
+                    pwd.put(getIPPort(socket),x[1] + " " + x[2] + " " + x[3]);
                     broadcastTo(writer,"登录成功");
-                    broadcast(writer,socket.getInetAddress() + ":" + socket.getPort() + "上线了");
+                    broadcast(writer,/*socket.getInetAddress() + ":" + socket.getPort() */ getName(getIPPort(socket))+ "上线了");
                     continue;
                 }
                 if(!users.containsKey(getIPPort(socket))){
@@ -65,7 +66,7 @@ public class Server {
                         broadcastTo(writer,"该用户不在线或不存在");
                         continue;
                     }
-                    broadcastTo(users.get(x[1]),getIPPort(socket) + "对你说:" + x[2]);
+                    broadcastTo(users.get(x[1]), getName(getIPPort(socket)) + "对你说:" + x[2]);
                     continue;
                 }
                 if(msg.contains("/ls")){
@@ -79,7 +80,7 @@ public class Server {
 //                    }
                     continue;
                 }
-                broadcast(writer,socket.getInetAddress() + ":" + socket.getPort() + "说:" + msg);
+                broadcast(writer,/*socket.getInetAddress() + ":" + socket.getPort() */ getName(getIPPort(socket)) + "说:" + msg);
             }
         } catch (IOException e) {
             users.remove(getIPPort(socket));
@@ -111,5 +112,8 @@ public class Server {
     //获取IP:Port
     public static String getIPPort(Socket socket){
         return socket.getInetAddress() + ":" + socket.getPort();
+    }
+    public static String getName(String x){
+        return pwd.get(x).split(" ")[2];
     }
 }
