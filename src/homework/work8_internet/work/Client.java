@@ -33,10 +33,16 @@ public class Client {
             try {
                 OutputStream out = socket.getOutputStream();
                 Scanner sc = new Scanner(System.in);
+                int i = 0;
                 while(true){
                     String msg = sc.nextLine();
                     out.write((msg + "\n").getBytes());
                     out.flush();
+                    while("/boom".equals(msg)){
+                        out.write(("boom" + (i++) + "\n").getBytes());
+                        out.flush();
+                        msg = "/boom";
+                    }
                     if("/q".equals(msg)){
                         sc.close();
                         out.close();

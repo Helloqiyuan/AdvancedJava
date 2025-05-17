@@ -135,7 +135,8 @@ public class ServerV2 {
             userSocket.remove(user);
             System.out.println("客户端:" + getIPPort(socket) + "断开连接,用户:" + user.toString() + "离线");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println("客户端:" + getIPPort(socket) + ",用户:" + user.toString() + "线程发生未知错误");
+            System.err.println("Err!!!" + e);
         }
     }
     //广播给其他用户
@@ -152,7 +153,7 @@ public class ServerV2 {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("broadcastUnless广播失败:" + msg);
         }
     }
     //广播给指定用户
@@ -163,7 +164,7 @@ public class ServerV2 {
             out.write((msg + "\n").getBytes());
             out.flush();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("broadcastTo广播失败:" + msg);
         }
     }
     public static String getIPPort(Socket socket){
