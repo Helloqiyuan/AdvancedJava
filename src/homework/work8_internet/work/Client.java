@@ -7,8 +7,8 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("113.219.237.121", 18244);
-        //Socket socket = new Socket("127.0.0.1", 6666);
+//        Socket socket = new Socket("113.219.237.121", 18244);
+        Socket socket = new Socket("127.0.0.1", 6666);
         System.out.println(socket.getInetAddress() + ":" + socket.getLocalPort() + "客户端启动成功！");
         //测试连接
         System.out.println("/help获取帮助");
@@ -38,11 +38,11 @@ public class Client {
                     String msg = sc.nextLine();
                     out.write((msg + "\n").getBytes());
                     out.flush();
-                    while("/boom".equals(msg)){
-                        out.write(("boom" + (i++) + "\n").getBytes());
-                        out.flush();
-                        msg = "/boom";
-                    }
+//                    while("/boom".equals(msg)){
+//                        out.write(("boom" + (i++) + "\n").getBytes());
+//                        out.flush();
+//                        msg = "/boom";
+//                    }
                     if("/q".equals(msg)){
                         sc.close();
                         out.close();

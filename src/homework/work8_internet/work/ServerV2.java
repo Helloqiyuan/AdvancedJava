@@ -9,11 +9,9 @@ import java.util.HashSet;
 public class ServerV2 {
     //记录所有注册用户的在线状态
     private static final HashMap<User,Boolean> users = new HashMap<>();
-    //记录所有客户端,退出一个客户端对应的数据会删除
+    //登录成功时 记录客户端,退出一个客户端对应的数据会删除
     private static final HashSet<Socket> sockets = new HashSet<>();
-    //客户端映射用户,退出一个客户端对应的数据会删除
-    private static final HashMap<Socket,User> socketUser = new HashMap<>();
-    //用户映射客户端,退出一个客户端对应的数据会删除
+    //登录成功时 用户映射客户端,退出一个客户端对应的数据会删除
     private static final HashMap<User,Socket> userSocket = new HashMap<>();
 
     public static final int PORT = 6666;
@@ -27,7 +25,6 @@ public class ServerV2 {
             if(socket == null){
                 continue;
             }
-            sockets.add(socket);
             System.out.println("服务器端检测到客户端" + socket.getInetAddress() + ":" + socket.getPort() + "连接");
             broadcastTo(socket,"服务器连接成功!");
             new Thread(()->logIn(socket)).start();
@@ -38,7 +35,7 @@ public class ServerV2 {
         try{
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String msg;
-            User user;
+
             while(true) {
                 msg = reader.readLine();
                 System.out.println("服务器端接收到客户端" + socket.getInetAddress() + ":" + socket.getPort() + "发来的消息:" + msg);
@@ -59,31 +56,42 @@ public class ServerV2 {
                         broadcastTo(socket,"格式错误/login account password name");
                         continue;
                     }
-                    user = new User(arr[1],arr[2],arr[3]);
+                    User user = new User(arr[1],arr[2],arr[3]);
                     if(users.containsKey(user)){
-                        User oldUser = users.keySet().stream().filter(y->y.getAccount().equals(user.getAccount())).findFirst().get();
+                        //User finalUser = user;
+                        User oldUser = users
+                                .keySet()
+                                .stream()
+                                .filter(x->x.getAccount().equals(user.getAccount()))
+                                .toList()
+                                .getFirst();
                         if(oldUser.getPassword().equals(user.getPassword())){
-                            broadcastTo(socket,"账号已存在,登录成功！");
-                            if(!oldUser.getName().equals(user.getName())){
+                            if(users.get(oldUser)){
+                                broadcastTo(socket,"账号在别处登录,登录失败!");
+                                continue;
+                            }
+                            broadcastTo(socket, "登录成功！");
+                            if (!oldUser.getName().equals(user.getName())) {
                                 oldUser.setName(user.getName());
-                                broadcastTo(socket,"昵称已更新为" + user.getName());
+                                broadcastTo(socket, "昵称已更新为" + user.getName());
                             }
                         }else{
                             broadcastTo(socket,"密码错误");
+                            continue;
                         }
                     }else{
                         broadcastTo(socket,"注册成功！");
                     }
                     users.put(user,true);
-                    socketUser.put(socket,user);
+                    sockets.add(socket);
                     userSocket.put(user,socket);
                     broadcastUnless(socket,user.getName() + "上线了");
+                    new Thread(()->receive(socket,user)).start();
                     break;
                 }else {
                     broadcastTo(socket, "请先登录!");
                 }
             }
-            receive(socket,user);
         } catch (IOException e) {
             System.out.println("客户端:" + getIPPort(socket) + "断开连接");
         }
@@ -92,7 +100,6 @@ public class ServerV2 {
         //System.out.println("receive检查点");
         try{
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             while(true){
                 String msg = reader.readLine().toLowerCase();
                 if(msg == null || msg.isEmpty()){continue;}
@@ -131,7 +138,6 @@ public class ServerV2 {
         } catch (IOException e) {
             users.put(user,false);
             sockets.remove(socket);
-            socketUser.remove(socket);
             userSocket.remove(user);
             System.out.println("客户端:" + getIPPort(socket) + "断开连接,用户:" + user.toString() + "离线");
         } catch (Exception e) {
@@ -141,19 +147,11 @@ public class ServerV2 {
     }
     //广播给其他用户
     public static void broadcastUnless(Socket socket,String msg){
-        try {
-            for(Socket x:sockets){
-                if(x != null  && x != socket){
-                    //给其他登录的用户发送
-                    if(socketUser.containsKey(x)) {
-                        OutputStream out = x.getOutputStream();
-                        out.write((msg + "\n").getBytes());
-                        out.flush();
-                    }
-                }
+        for(Socket x:sockets){
+            if(x != socket){
+                //给其他登录的用户发送
+                broadcastTo(x,msg);
             }
-        } catch (IOException e) {
-            System.out.println("broadcastUnless广播失败:" + msg);
         }
     }
     //广播给指定用户
